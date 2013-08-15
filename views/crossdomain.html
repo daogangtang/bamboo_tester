@@ -1,0 +1,72 @@
+<html>
+
+<head>
+
+  <script>
+function getCookie(c_name)
+{
+if (document.cookie.length>0)
+  {
+  c_start=document.cookie.indexOf(c_name + "=")
+  if (c_start!=-1)
+    { 
+    c_start=c_start + c_name.length+1 
+    c_end=document.cookie.indexOf(";",c_start)
+    if (c_end==-1) c_end=document.cookie.length
+    return unescape(document.cookie.substring(c_start,c_end))
+    } 
+  }
+return ""
+}
+
+function setCookie(c_name,value,expiredays,path, domain)
+{
+var exdate=new Date()
+exdate.setDate(exdate.getDate()+expiredays)
+document.cookie = c_name
+  + "=" 
+  + escape(value) 
+  + ((expiredays==null) ? "" : ";expires="+exdate.toGMTString())
+  + ";path="+path+";domain="+domain
+}
+
+
+  console.log('--->', location.href)
+  if (location.href.indexOf('www.site1') >= 0) {
+    console.log('===')
+    // 两个二级域名下，都可以访问
+    setCookie('mobileid', '00023456789', 100, '/', '.site1.com')
+    // 只有本域名能访问，另一个二级域名访问不了
+    //setCookie('mobileid', '99923456789', 100, '/', 'www.site1.com')
+    // 两个二级域名都访问不了
+    //setCookie('mobileid', '---23456789', 100, '/', 'test.site1.com')
+    
+  }
+  
+//   console.log('--->', location.href)
+//   if (location.href.indexOf('site1') > 0) {
+//     console.log('===')
+//     setCookie('mobileid', '123456789', 100, '/', 'www.site2.com')
+//     
+//   }
+  
+  console.log(getCookie('mobileid'))
+  
+  //console.log('--->')
+  //setCookie('mobileid', '123456789', 100, '/', 'www.site2.com')
+    
+  </script>
+
+</head>
+
+<body>
+  hahahahahhaah
+
+
+</body>
+
+
+</html>
+
+
+
