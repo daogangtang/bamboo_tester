@@ -23,6 +23,9 @@ fptable(mongodb)
 local Person = require 'models.person'
 bamboo.registerModel(Person, mongodb, redisdb)
 
+local Comment = require 'models.comment'
+bamboo.registerModel(Comment, mongodb, redisdb)
+
 local function index(web, req)
     
     local persons = Person:all()

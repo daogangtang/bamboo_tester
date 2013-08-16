@@ -22,10 +22,11 @@ context("Bamboo Core Feature Testing", function ()
   -- all models were registered in handler_entry.lua
   -- now we can use them by bamboo.getModelByName
   local Person = bamboo.getModelByName('Person')
-  local mongodb = Person.__db
-  local collection = Person.__collection
+  local Comment = bamboo.getModelByName('Person')
   -- clean the test target collection
-  mongodb:drop(collection)
+  Person.__db:drop(Person.__collection)
+  Comment.__db:drop(Comment.__collection)
+  
 
   -- add ITEMS items
   math.randomseed(os.time())
