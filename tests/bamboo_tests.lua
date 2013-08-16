@@ -1,4 +1,5 @@
 local testing = require "bamboo.testing"
+local socket = require 'socket'
 
 local NAMES = {
 'Aaron亚伦',
@@ -361,7 +362,71 @@ context("Bamboo Core Feature Testing", function ()
       
       end)
       
-      
+            
+      test("test save, update, del", function ()
+        local p = Person {
+          name = 'TGG',
+          age = 28,
+          home = 'SiChuan'
+        }
+        p:save()
+        assert_equal( Person:numbers() == ITEMS + 1, true)
+        local nn = Person:getByIndex(ITEMS+1)
+        -- check id assignment after insert doc
+        assert_equal(p.id == nn.id, true)
+        
+        
+        local p = Person {
+          name = 'TGG2',
+          age = 29,
+          home = 'SiChuanChuan'
+        }
+        p:save()
+        assert_equal( Person:numbers() == ITEMS + 2, true)
+        
+        local p = Person:getByIndex(ITEMS+2)
+        assert_equal(type(p) == 'table', true)
+        
+        -- test new params when save
+        p:save({
+          name = 'TGG3',
+          age = 30,
+          home = 'SiChuan2'
+        })
+        local p = Person:getByIndex(ITEMS+2)
+        assert_equal(type(p) == 'table', true)
+        assert_equal(p.name == 'TGG3', true)
+        assert_equal(p.age == 30, true)
+        assert_equal(p.home == 'SiChuan2', true)
+        
+        -- test update
+        local p = Person:getByIndex(ITEMS+2)
+        assert_equal(type(p) == 'table', true)
+        p:update('name', 'TGG4')
+        p:update('age', 32)
+        p:update('home', 'SiChuan3')
+        local p2 = Person:getByIndex(ITEMS+2)
+        assert_equal(type(p2) == 'table', true)
+        assert_equal(p2.name == 'TGG4', true)
+        assert_equal(p2.age == 32, true)
+        assert_equal(p2.home == 'SiChuan3', true)
+        -- check in memory attribute update
+        assert_equal(p.name == 'TGG4', true)
+        assert_equal(p.age == 32, true)
+        assert_equal(p.home == 'SiChuan3', true)
+        
+        -- test del
+        local p = Person:getByIndex(ITEMS+2)
+        assert_equal(type(p) == 'table', true)
+        p:del()
+        assert_equal( Person:numbers() == ITEMS + 1, true)
+        
+        local p = Person:getByIndex(ITEMS+1)
+        assert_equal(type(p) == 'table', true)
+        p:del()
+        assert_equal( Person:numbers() == ITEMS, true)
+        
+      end)
       
     
 		end)
@@ -513,14 +578,389 @@ context("Bamboo Core Feature Testing", function ()
         assert_equal(n == cnt, true)
       end)
       
-      
+
       
 		end)
 		
     
     context("Foreign API", function ()
+      
+      test("test addForeign, getForeign", function ()
+        -- add a new person
+        local p = Person {
+          name = 'TGG',
+          age = 28,
+          home = 'SiChuan'
+        }
+        p:save()
+        assert_equal( Person:numbers() == ITEMS + 1, true)
+        
+        p = Person:getByIndex(ITEMS + 1)
+        local fromp = Person:getByIndex(1)
+        local comment = Comment {
+          content = '你好棒哦',
+          date = socket.gettime()
+        }
+        comment:save()
+        comment:addForeign('from', fromp)
+        
+        local fromp2 = Person:getByIndex(2)
+        local comment2 = Comment {
+          content = '你好2.',
+          date = socket.gettime()
+        }
+        comment2:save()
+        comment2:addForeign('from', fromp2)
+        
+        local fromp3 = Person:getByIndex(3)
+        local comment3 = Comment {
+          content = '你好3.',
+          date = socket.gettime()
+        }
+        comment3:save()
+        comment3:addForeign('from', fromp3)
+        
+        local fromp4 = Person:getByIndex(4)
+        local comment4 = Comment {
+          content = '你好4.',
+          date = socket.gettime()
+        }
+        comment4:save()
+        comment4:addForeign('from', fromp4)
+        
+        -------------------------------------
+        -- test NORMAL
+        -------------------------------------
+        local testForeignGroup = function (comment, n, m)
+          p:addForeign('ff1', comment)  -- ONE
+          local tp = p:getForeign('ff1')
+          assert_equal( comment.id == tp.id, true)
+          assert_equal( comment.content == tp.content, true)
+          assert_equal( comment.date == tp.date, true)
+          
+          p:addForeign('ff2', comment)  -- MANY
+          local tps = p:getForeign('ff2')
+          assert_equal(#tps == n, true)
+          local tp = tps[n]
+          assert_equal( comment.id == tp.id, true)
+          assert_equal( comment.content == tp.content, true)
+          assert_equal( comment.date == tp.date, true)
+          
+          p:addForeign('ff3', comment)  -- LIST
+          local tps = p:getForeign('ff3')
+          assert_equal(#tps == n, true)
+          local tp = tps[n]
+          assert_equal( comment.id == tp.id, true)
+          assert_equal( comment.content == tp.content, true)
+          assert_equal( comment.date == tp.date, true)
+          
+          p:addForeign('ff4', comment) -- FIFO
+          local tps = p:getForeign('ff4')
+          assert_equal(#tps == m, true)
+          local tp = tps[m]
+          assert_equal( comment.id == tp.id, true)
+          assert_equal( comment.content == tp.content, true)
+          assert_equal( comment.date == tp.date, true)
+          
+          p:addForeign('ff5', comment) -- ZFIFO
+          local tps = p:getForeign('ff5')
+          assert_equal(#tps == m, true)
+          local tp = tps[m]
+          assert_equal( comment.id == tp.id, true)
+          assert_equal( comment.content == tp.content, true)
+          assert_equal( comment.date == tp.date, true)
+        
+        
+        end
+        
+        -- add comment
+        testForeignGroup(comment, 1, 1)
+        
+        -- add comment2
+        testForeignGroup(comment2, 2, 2)
+        
+        -- add comment3
+        testForeignGroup(comment3, 3, 2)
+        
+        -- add comment4
+        testForeignGroup(comment4, 4, 2)
+                
+        -------------------------------------
+        -- test ANYOBJ
+        -------------------------------------
+        local testAnyobjForeignGroup = function (comment, n, m)
+          p:addForeign('ffa', comment)  -- ONE
+          local tp = p:getForeign('ffa')
+          assert_equal( comment.id == tp.id, true)
+          assert_equal( comment.content == tp.content, true)
+          assert_equal( comment.date == tp.date, true)
+          
+          p:addForeign('ffb', comment)  -- MANY
+          local tps = p:getForeign('ffb')
+          assert_equal(#tps == n, true)
+          local tp = tps[n]
+          assert_equal( comment.id == tp.id, true)
+          assert_equal( comment.content == tp.content, true)
+          assert_equal( comment.date == tp.date, true)
+          
+          p:addForeign('ffc', comment)  -- LIST
+          local tps = p:getForeign('ffc')
+          assert_equal(#tps == n, true)
+          local tp = tps[n]
+          assert_equal( comment.id == tp.id, true)
+          assert_equal( comment.content == tp.content, true)
+          assert_equal( comment.date == tp.date, true)
+          
+          p:addForeign('ffd', comment) -- FIFO
+          local tps = p:getForeign('ffd')
+          assert_equal(#tps == m, true)
+          local tp = tps[m]
+          assert_equal( comment.id == tp.id, true)
+          assert_equal( comment.content == tp.content, true)
+          assert_equal( comment.date == tp.date, true)
+          
+          p:addForeign('ffe', comment) -- ZFIFO
+          local tps = p:getForeign('ffe')
+          assert_equal(#tps == m, true)
+          local tp = tps[m]
+          assert_equal( comment.id == tp.id, true)
+          assert_equal( comment.content == tp.content, true)
+          assert_equal( comment.date == tp.date, true)
+          
+        end
+        
+        -- add comment
+        testAnyobjForeignGroup(comment, 1, 1)
+        
+        -- add comment2
+        testAnyobjForeignGroup(comment2, 2, 2)
+
+        -- add comment3
+        testAnyobjForeignGroup(comment3, 3, 2)
+
+        -- add comment4
+        testAnyobjForeignGroup(comment4, 4, 2)
+      
+      end)
+
+      -- now p has some foreigns in its each foreign field
+      test("test numForeign", function ()
+
+        assert_equal( p:numForeign('ff1') == 1, true)
+        assert_equal( p:numForeign('ff2') == 4, true)
+        assert_equal( p:numForeign('ff3') == 4, true)
+        assert_equal( p:numForeign('ff4') == 2, true)
+        assert_equal( p:numForeign('ff5') == 2, true)
+        
+        assert_equal( p:numForeign('ffa') == 1, true)
+        assert_equal( p:numForeign('ffb') == 4, true)
+        assert_equal( p:numForeign('ffc') == 4, true)
+        assert_equal( p:numForeign('ffd') == 2, true)
+        assert_equal( p:numForeign('ffe') == 2, true)
+        
+      end)
+    
+      -- now p has some foreigns in its each foreign field
+      test("test hasForeignKey", function ()
+
+        assert_equal( p:hasForeignKey('ff1'), true)
+        assert_equal( p:hasForeignKey('ff2'), true)
+        assert_equal( p:hasForeignKey('ff3'), true)
+        assert_equal( p:hasForeignKey('ff4'), true)
+        assert_equal( p:hasForeignKey('ff5'), true)
+        
+        assert_equal( p:hasForeignKey('ff6'), false)
+        assert_equal( p:hasForeignKey('name'), false)
+        
+        assert_equal( p:hasForeignKey('ffa'), true)
+        assert_equal( p:hasForeignKey('ffb'), true)
+        assert_equal( p:hasForeignKey('ffc'), true)
+        assert_equal( p:hasForeignKey('ffd'), true)
+        assert_equal( p:hasForeignKey('ffe'), true)
+        
+        assert_equal( p:hasForeignKey('fff'), false)
+        assert_equal( p:hasForeignKey('age'), false)
+        
+      end)
+      
+      -- now p has some foreigns in its each foreign field
+      test("test hasForeignMember", function ()
+
+        assert_equal( p:hasForeignMember('ff1', comment4), true)
+        assert_equal( p:hasForeignMember('ff1', comment2), false)
+        
+        assert_equal( p:hasForeignMember('ff2', comment4), true)
+        assert_equal( p:hasForeignMember('ff2', comment3), true)
+        assert_equal( p:hasForeignMember('ff2', comment2), true)
+        assert_equal( p:hasForeignMember('ff2', comment), true)
+        
+        assert_equal( p:hasForeignMember('ff3', comment4), true)
+        assert_equal( p:hasForeignMember('ff3', comment3), true)
+        assert_equal( p:hasForeignMember('ff3', comment2), true)
+        assert_equal( p:hasForeignMember('ff3', comment), true)
+        
+        assert_equal( p:hasForeignMember('ff4', comment4), true)
+        assert_equal( p:hasForeignMember('ff4', comment3), true)
+        assert_equal( p:hasForeignMember('ff4', comment2), false)
+        assert_equal( p:hasForeignMember('ff4', comment), false)
+        
+        assert_equal( p:hasForeignMember('ff5', comment4), true)
+        assert_equal( p:hasForeignMember('ff5', comment3), true)
+        assert_equal( p:hasForeignMember('ff5', comment2), false)
+        assert_equal( p:hasForeignMember('ff5', comment), false)
+        
+        assert_equal( p:hasForeignMember('ffa', comment4), true)
+        assert_equal( p:hasForeignMember('ffa', comment), false)
+
+        assert_equal( p:hasForeignMember('ffb', comment4), true)
+        assert_equal( p:hasForeignMember('ffb', comment3), true)
+        assert_equal( p:hasForeignMember('ffb', comment2), true)
+        assert_equal( p:hasForeignMember('ffb', comment), true)
+        
+        assert_equal( p:hasForeignMember('ffc', comment4), true)
+        assert_equal( p:hasForeignMember('ffc', comment3), true)
+        assert_equal( p:hasForeignMember('ffc', comment2), true)
+        assert_equal( p:hasForeignMember('ffc', comment), true)
+        
+        assert_equal( p:hasForeignMember('ffd', comment4), true)
+        assert_equal( p:hasForeignMember('ffd', comment3), true)
+        assert_equal( p:hasForeignMember('ffd', comment2), false)
+        assert_equal( p:hasForeignMember('ffd', comment), false)
+
+        assert_equal( p:hasForeignMember('ffe', comment4), true)
+        assert_equal( p:hasForeignMember('ffe', comment3), true)
+        assert_equal( p:hasForeignMember('ffe', comment2), true)
+        assert_equal( p:hasForeignMember('ffe', comment), true)
+        
+      end)
+    
+    
+      -- now p has some foreigns in its each foreign field
+      test("test removeForeignMember", function ()
+
+        p:removeForeignMember('ff1', comment4)
+        local c = p:getForeign('ff1')
+        assert_equal(c, nil)
+        
+        p:removeForeignMember('ff2', comment4)
+        local cs = p:getForeign('ff2')
+        assert_equal(#cs, 3)
+        
+        p:removeForeignMember('ff3', comment4)
+        local cs = p:getForeign('ff3')
+        assert_equal(#cs, 3)
+        
+        
+        p:removeForeignMember('ff4', comment)
+        local cs = p:getForeign('ff4')
+        assert_equal(#cs, 2)
+        p:removeForeignMember('ff4', comment4)
+        local cs = p:getForeign('ff4')
+        assert_equal(#cs, 1)
+        
+        p:removeForeignMember('ff5', comment)
+        local cs = p:getForeign('ff5')
+        assert_equal(#cs, 2)
+        
+        p:removeForeignMember('ff5', comment4)
+        local cs = p:getForeign('ff5')
+        assert_equal(#cs, 1)
+
+        --------------------------------------
+        -- test ANYOBJ
+        p:removeForeignMember('ffa', comment4)
+        local c = p:getForeign('ffa')
+        assert_equal(c, nil)
+        
+        p:removeForeignMember('ffb', comment4)
+        local cs = p:getForeign('ffb')
+        assert_equal(#cs, 3)
+        
+        p:removeForeignMember('ffc', comment4)
+        local cs = p:getForeign('ffc')
+        assert_equal(#cs, 3)
+        
+        
+        p:removeForeignMember('ffd', comment)
+        local cs = p:getForeign('ffd')
+        assert_equal(#cs, 2)
+        p:removeForeignMember('ffd', comment4)
+        local cs = p:getForeign('ffd')
+        assert_equal(#cs, 1)
+        
+        p:removeForeignMember('ffe', comment)
+        local cs = p:getForeign('ffe')
+        assert_equal(#cs, 2)
+        
+        p:removeForeignMember('ffe', comment4)
+        local cs = p:getForeign('ffe')
+        assert_equal(#cs, 1)
+        
+        
+      end)
+    
+      
+      -- now p has some foreigns in its each foreign field
+      test("test delForeign", function ()
+        p:delForeign('ffa')
+        local c = p:getForeign('ffa')
+        assert_equal(c, nil)
+        
+        p:delForeign('ffb')
+        local cs = p:getForeign('ffb')
+        assert_equal(#cs, 0)
+        
+        p:delForeign('ffc')
+        local cs = p:getForeign('ffc')
+        assert_equal(#cs, 0)
+        
+        p:delForeign('ffd')
+        local cs = p:getForeign('ffd')
+        assert_equal(#cs, 0)
+        
+        p:delForeign('ffe')
+        local cs = p:getForeign('ffe')
+        assert_equal(#cs, 0)
+        
+      end)
+    
+      -- now p has some foreigns in its each foreign field
+      test("test deepDelForeign", function ()
+        
+        local c3 = Comment:getByIndex(3)
+        assert_equal(c3 ~= nil, true)
+        local c4 = Comment:getByIndex(4)
+        assert_equal(c4 ~= nil, true)
+        
+        p:deepDelForeign('ff4')
+        local cs = p:getForeign('ff4')
+        assert_equal(#cs, 0)
+        
+        local c3 = Comment:getByIndex(3)
+        assert_equal(c3 == nil, true)
+        local c4 = Comment:getByIndex(4)
+        assert_equal(c4 == nil, true)
+        
+        local c1 = Comment:getByIndex(1)
+        assert_equal(c1 ~= nil, true)
+        local c2 = Comment:getByIndex(2)
+        assert_equal(c2 ~= nil, true)
+        
+        p:deepDelForeign('ff2')
+        local cs = p:getForeign('ff2')
+        assert_equal(#cs, 0)
+        
+        local c1 = Comment:getByIndex(1)
+        assert_equal(c1 == nil, true)
+        local c2 = Comment:getByIndex(2)
+        assert_equal(c2 == nil, true)
+        
+
+        
+      end)
+
 		
-		end)
+    end)
 		
 		context("Custom API", function ()
 		
