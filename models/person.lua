@@ -17,8 +17,8 @@ local Person = Model:extend {
     ['ffa'] = {foreign="ANYOBJ", st='ONE'},
     ['ffb'] = {foreign="ANYOBJ", st='MANY'},
     ['ffc'] = {foreign="ANYOBJ", st='LIST'},
-    ['ffd'] = {foreign="ANYOBJ", st='FIFO'},
-    ['ffe'] = {foreign="ANYOBJ", st='ZFIFO'},
+    ['ffd'] = {foreign="ANYOBJ", st='FIFO', fifolen=2},
+    ['ffe'] = {foreign="ANYOBJ", st='ZFIFO', fifolen=2},
     
     
   },

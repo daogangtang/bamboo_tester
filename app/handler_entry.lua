@@ -15,8 +15,8 @@ local mongodb = mongo.connect({
   db = 'test'
 })
 
-fptable(redisdb)
-fptable(mongodb)
+--fptable(redisdb)
+--fptable(mongodb)
 --_G.BAMBOO_MDB = mongodb
 --_G.BAMBOO_DB = redisdb
 
