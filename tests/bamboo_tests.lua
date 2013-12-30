@@ -117,7 +117,7 @@ context("Bamboo Core Feature Testing", function ()
           assert_equal(v:equal(v), true)
         end
         
-        local instances2 = Person:all({}, 'rev')
+        local instances2 = Person:all('rev')
         assert_equal(#instances2, ITEMS)
         
         for i, v in ipairs(instances2) do
@@ -130,7 +130,7 @@ context("Bamboo Core Feature Testing", function ()
         end
         
         -- 检测只取name字段
-        local instances3 = Person:all({name=true}, 'rev')
+        local instances3 = Person:all('rev', {name=true})
         assert_equal(#instances3, ITEMS)
         
         
@@ -164,7 +164,7 @@ context("Bamboo Core Feature Testing", function ()
       end)
       
       test("test getByIds, slice", function ()
-        local instances = Person:slice({}, 21, 30)
+        local instances = Person:slice(21, 30)
         local ids = {}
         instances:each(function (e) table.insert(ids, e.id) end)
         
@@ -174,7 +174,7 @@ context("Bamboo Core Feature Testing", function ()
           assert_equal(v:equal(objs[i]), true)
         end
         
-        local instances2 = Person:slice({}, 21, 30, 'rev')
+        local instances2 = Person:slice(21, 30, 'rev')
         local ids = {}
         instances2:each(function (e) table.insert(ids, e.id) end)
         
